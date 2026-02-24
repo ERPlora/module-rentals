@@ -4,8 +4,24 @@ from . import views
 app_name = 'rentals'
 
 urlpatterns = [
+    # Dashboard
     path('', views.dashboard, name='dashboard'),
-    path('items/', views.items, name='items'),
-    path('rentals/', views.rentals, name='rentals'),
-    path('settings/', views.settings, name='settings'),
+
+    # RentalItem
+    path('rental_items/', views.rental_items_list, name='rental_items_list'),
+    path('rental_items/add/', views.rental_item_add, name='rental_item_add'),
+    path('rental_items/<uuid:pk>/edit/', views.rental_item_edit, name='rental_item_edit'),
+    path('rental_items/<uuid:pk>/delete/', views.rental_item_delete, name='rental_item_delete'),
+    path('rental_items/<uuid:pk>/toggle/', views.rental_item_toggle_status, name='rental_item_toggle_status'),
+    path('rental_items/bulk/', views.rental_items_bulk_action, name='rental_items_bulk_action'),
+
+    # Rental
+    path('rentals/', views.rentals_list, name='rentals_list'),
+    path('rentals/add/', views.rental_add, name='rental_add'),
+    path('rentals/<uuid:pk>/edit/', views.rental_edit, name='rental_edit'),
+    path('rentals/<uuid:pk>/delete/', views.rental_delete, name='rental_delete'),
+    path('rentals/bulk/', views.rentals_bulk_action, name='rentals_bulk_action'),
+
+    # Settings
+    path('settings/', views.settings_view, name='settings'),
 ]
