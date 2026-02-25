@@ -1,0 +1,195 @@
+{% load djicons i18n %}
+
+<div x-data="{
+    addOpen: false,
+    deleteConfirm: false,
+    deleteTarget: null,
+    openAddPanel() {
+        htmx.ajax('GET', '{% url 'rentals:blackout_add_panel' item.id %}', { target: '#blackout-panel-content', swap: 'innerHTML' });
+        this.addOpen = true;
+    },
+    closePanel() { this.addOpen = false; },
+    confirmDelete() {
+        if (this.deleteTarget) {
+            htmx.ajax('POST', this.deleteTarget.url, {
+                target: '#blackouts-container', swap: 'innerHTML',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' }
+            });
+        }
+        this.deleteConfirm = false;
+        this.deleteTarget = null;
+    }
+}">
+
+    <!-- Back button -->
+    <div class="mb-4">
+        <button class="btn btn-ghost btn-sm"
+                hx-get="{% url 'rentals:rental_items_list' %}"
+                hx-target="#main-content-area"
+                hx-push-url="true">
+            {% icon "arrow-back-outline" %}
+            {% trans "Back to Rental Items" %}
+        </button>
+    </div>
+
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left column: Item info -->
+        <div class="lg:col-span-1">
+            <div class="card glass">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Item Details" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list list-inset">
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Name" %}</span>
+                                <span class="list-item-value">{{ item.name }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Code" %}</span>
+                                <span class="list-item-value">{{ item.code|default:"-" }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Daily Rate" %}</span>
+                                <span class="list-item-value">{{ item.daily_rate }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Category" %}</span>
+                                <span class="list-item-value">{{ item.category|default:"-" }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Location" %}</span>
+                                <span class="list-item-value">{{ item.location|default:"-" }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Total Quantity" %}</span>
+                                <span class="list-item-value">{{ item.quantity_total }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Status" %}</span>
+                                <span class="list-item-end">
+                                    {% if item.is_active %}
+                                    <span class="badge badge-sm color-success">{% trans "Active" %}</span>
+                                    {% else %}
+                                    <span class="badge badge-sm">{% trans "Inactive" %}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Available" %}</span>
+                                <span class="list-item-end">
+                                    {% if item.is_available %}
+                                    <span class="badge badge-sm color-success">{% trans "Yes" %}</span>
+                                    {% else %}
+                                    <span class="badge badge-sm color-error">{% trans "No" %}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% if item.description %}
+                        <div class="list-item list-item-multiline">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{% trans "Description" %}</span>
+                                <span class="list-item-note">{{ item.description }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column: Active Rentals + Blackouts -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <!-- Active Rentals -->
+            <div class="card glass">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Active Rentals" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if active_rentals %}
+                    <div class="list">
+                        {% for rental in active_rentals %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <span class="list-item-label">{{ rental.reference }}</span>
+                                <span class="list-item-note">
+                                    {{ rental.customer_name }}
+                                    | {{ rental.start_date }} - {{ rental.end_date }}
+                                </span>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="badge badge-sm {% if rental.status == 'active' %}color-success{% elif rental.status == 'reserved' %}color-warning{% endif %}">{{ rental.get_status_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-8 text-center text-base-content/50">
+                        <div class="text-3xl mb-2">{% icon "key-outline" %}</div>
+                        <p class="text-sm">{% trans "No active or reserved rentals for this item." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Blocked Dates -->
+            <div class="card glass">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Blocked Dates" %}</h3>
+                    <button class="btn btn-sm color-primary"
+                            @click="openAddPanel()">
+                        {% icon "add-outline" %}
+                        {% trans "Add Blackout" %}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="blackouts-container">
+                        {% include "rentals/partials/blackouts_list.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Sheet for adding blackout -->
+    <div class="sheet-backdrop" :class="{ 'is-open': addOpen }" @click.self="closePanel()">
+        <div class="side-sheet side-sheet-right" id="blackout-panel-content"></div>
+    </div>
+
+    <!-- Delete confirmation modal -->
+    <div class="modal-backdrop" :data-state="deleteConfirm ? 'open' : 'closed'" @click.self="deleteConfirm = false; deleteTarget = null">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Confirm Delete" %}</h3>
+                <button class="modal-close" @click="deleteConfirm = false; deleteTarget = null">{% icon "close-outline" %}</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-base-content/70">
+                    {% trans "Are you sure you want to delete this blackout period?" %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost btn-sm" @click="deleteConfirm = false; deleteTarget = null">{% trans "Cancel" %}</button>
+                <button class="btn btn-sm color-error" @click="confirmDelete()">{% icon "trash-outline" %} {% trans "Delete" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

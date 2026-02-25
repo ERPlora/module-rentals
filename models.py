@@ -18,6 +18,9 @@ class RentalItem(HubBaseModel):
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2, default='0', verbose_name=_('Daily Rate'))
     is_available = models.BooleanField(default=True, verbose_name=_('Is Available'))
     is_active = models.BooleanField(default=True, verbose_name=_('Is Active'))
+    category = models.CharField(max_length=100, blank=True, verbose_name=_('Category'))
+    location = models.CharField(max_length=255, blank=True, verbose_name=_('Location'))
+    quantity_total = models.PositiveIntegerField(default=1, verbose_name=_('Total Quantity'))
 
     class Meta(HubBaseModel.Meta):
         db_table = 'rentals_rentalitem'
@@ -34,6 +37,18 @@ class Rental(HubBaseModel):
     start_date = models.DateField(verbose_name=_('Start Date'))
     end_date = models.DateField(verbose_name=_('End Date'))
     total = models.DecimalField(max_digits=12, decimal_places=2, default='0', verbose_name=_('Total'))
+    # Customer link
+    customer = models.ForeignKey(
+        'customers.Customer', on_delete=models.SET_NULL,
+        null=True, blank=True, verbose_name=_('Customer'),
+    )
+    # Deposit
+    deposit_amount = models.DecimalField(max_digits=12, decimal_places=2, default='0', verbose_name=_('Deposit Amount'))
+    deposit_paid = models.BooleanField(default=False, verbose_name=_('Deposit Paid'))
+    deposit_returned = models.BooleanField(default=False, verbose_name=_('Deposit Returned'))
+    # Condition
+    condition_out = models.TextField(blank=True, verbose_name=_('Condition at Checkout'))
+    condition_in = models.TextField(blank=True, verbose_name=_('Condition at Return'))
     notes = models.TextField(blank=True, verbose_name=_('Notes'))
 
     class Meta(HubBaseModel.Meta):
@@ -41,4 +56,18 @@ class Rental(HubBaseModel):
 
     def __str__(self):
         return self.reference
+
+
+class RentalBlackout(HubBaseModel):
+    """Dates when a rental item is unavailable (maintenance, reserved, etc.)."""
+    item = models.ForeignKey('RentalItem', on_delete=models.CASCADE, related_name='blackouts')
+    start_date = models.DateField(verbose_name=_('Start Date'))
+    end_date = models.DateField(verbose_name=_('End Date'))
+    reason = models.CharField(max_length=255, blank=True, verbose_name=_('Reason'))
+
+    class Meta(HubBaseModel.Meta):
+        db_table = 'rentals_blackout'
+
+    def __str__(self):
+        return f'{self.item.name}: {self.start_date} - {self.end_date}'
 

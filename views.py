@@ -13,7 +13,7 @@ from apps.core.htmx import htmx_view
 from apps.core.services import export_to_csv, export_to_excel
 from apps.modules_runtime.navigation import with_module_nav
 
-from .models import RentalItem, Rental
+from .models import RentalItem, Rental, RentalBlackout
 
 PER_PAGE_CHOICES = [10, 25, 50, 100]
 
@@ -323,6 +323,64 @@ def rentals_bulk_action(request):
     if action == 'delete':
         qs.update(is_deleted=True, deleted_at=timezone.now())
     return _render_rentals_list(request, hub_id)
+
+
+# ======================================================================
+# Rental Item Detail + Blackouts
+# ======================================================================
+
+@login_required
+@with_module_nav('rentals', 'items')
+@htmx_view('rentals/pages/rental_item_detail.html', 'rentals/partials/rental_item_detail_content.html')
+def rental_item_detail(request, pk):
+    hub_id = request.session.get('hub_id')
+    item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
+    return {
+        'item': item,
+        'blackouts': RentalBlackout.objects.filter(item=item, is_deleted=False).order_by('-start_date'),
+        'active_rentals': Rental.objects.filter(item=item, is_deleted=False, status__in=['active', 'reserved']).order_by('-start_date')[:10],
+    }
+
+
+def _render_blackouts_list(request, item):
+    blackouts = RentalBlackout.objects.filter(item=item, is_deleted=False).order_by('-start_date')
+    return django_render(request, 'rentals/partials/blackouts_list.html', {
+        'item': item,
+        'blackouts': blackouts,
+    })
+
+
+@login_required
+@require_POST
+def blackout_add(request, pk):
+    hub_id = request.session.get('hub_id')
+    item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
+    blackout = RentalBlackout(hub_id=hub_id)
+    blackout.item = item
+    blackout.start_date = request.POST.get('start_date') or None
+    blackout.end_date = request.POST.get('end_date') or None
+    blackout.reason = request.POST.get('reason', '').strip()
+    blackout.save()
+    return _render_blackouts_list(request, item)
+
+
+@login_required
+@require_POST
+def blackout_delete(request, pk, blackout_pk):
+    hub_id = request.session.get('hub_id')
+    item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
+    blackout = get_object_or_404(RentalBlackout, pk=blackout_pk, item=item, is_deleted=False)
+    blackout.is_deleted = True
+    blackout.deleted_at = timezone.now()
+    blackout.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+    return _render_blackouts_list(request, item)
+
+
+@login_required
+def blackout_add_panel(request, pk):
+    hub_id = request.session.get('hub_id')
+    item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
+    return django_render(request, 'rentals/partials/panel_blackout_add.html', {'item': item})
 
 
 @login_required

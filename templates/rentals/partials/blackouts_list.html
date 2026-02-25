@@ -1,0 +1,31 @@
+{% load djicons i18n %}
+
+{% if blackouts %}
+<div class="list">
+    {% for blackout in blackouts %}
+    <div class="list-item">
+        <div class="list-item-start">
+            {% icon "calendar-outline" %}
+        </div>
+        <div class="list-item-content">
+            <span class="list-item-label">{{ blackout.start_date }} &mdash; {{ blackout.end_date }}</span>
+            {% if blackout.reason %}
+            <span class="list-item-note">{{ blackout.reason }}</span>
+            {% endif %}
+        </div>
+        <div class="list-item-end">
+            <button class="btn btn-ghost btn-sm btn-circle color-error"
+                    @click="deleteTarget = { url: '{% url 'rentals:blackout_delete' item.id blackout.id %}' }; deleteConfirm = true"
+                    title="{% trans 'Delete' %}">
+                {% icon "trash-outline" %}
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="p-8 text-center text-base-content/50">
+    <div class="text-3xl mb-2">{% icon "calendar-outline" %}</div>
+    <p class="text-sm">{% trans "No blocked dates. Add a blackout period to block availability." %}</p>
+</div>
+{% endif %}
