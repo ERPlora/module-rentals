@@ -21,16 +21,7 @@
     }
 }">
 
-    <!-- Back button -->
-    <div class="mb-4">
-        <button class="btn btn-ghost btn-sm"
-                hx-get="{% url 'rentals:rental_items_list' %}"
-                hx-target="#main-content-area"
-                hx-push-url="true">
-            {% icon "arrow-back-outline" %}
-            {% trans "Back to Rental Items" %}
-        </button>
-    </div>
+    <div data-back-url="{% url 'rentals:rental_items_list' %}" hidden></div>
 
     {% csrf_token %}
 
