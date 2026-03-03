@@ -33,3 +33,20 @@ PERMISSIONS = [
 'rentals.change_rentalitem',
 'rentals.manage_settings',
 ]
+
+ROLE_PERMISSIONS = {
+    "admin": ["*"],
+    "manager": [
+        "add_rental",
+        "add_rentalitem",
+        "change_rental",
+        "change_rentalitem",
+        "view_rental",
+        "view_rentalitem",
+    ],
+    "employee": [
+        "add_rental",
+        "view_rental",
+        "view_rentalitem",
+    ],
+}
