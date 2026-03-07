@@ -1,0 +1,45 @@
+{% load djicons i18n %}
+<div data-back-url="{% url 'rentals:dashboard' %}" hidden></div>
+
+<div class="p-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">{% trans "Add Blackout Period" %}</h1>
+        <div class="flex gap-2">
+            <a class="btn btn-ghost btn-sm"
+               hx-get="{% url 'rentals:dashboard' %}"
+               hx-target="#main-content-area"
+               hx-push-url="true">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" form="add-blackout-form" class="btn btn-sm color-primary">
+                {% icon "checkmark-outline" %}
+                {% trans "Save" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form id="add-blackout-form"
+          hx-post="{% url 'rentals:blackout_add' item.id %}" class="max-w-2xl">
+        {% csrf_token %}
+        <div class="card mb-4">
+            <div class="card-body flex flex-col gap-4">
+                <div class="form-group">
+                <label class="form-group-label">{% trans "Start Date" %}</label>
+                <input type="date" name="start_date" class="input input-sm w-full" required>
+                </div>
+
+                <div class="form-group">
+                <label class="form-group-label">{% trans "End Date" %}</label>
+                <input type="date" name="end_date" class="input input-sm w-full" required>
+                </div>
+
+                <div class="form-group">
+                <label class="form-group-label">{% trans "Reason" %}</label>
+                <input type="text" name="reason" class="input input-sm w-full" placeholder="{% trans 'e.g. Maintenance, Reserved, etc.' %}">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

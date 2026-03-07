@@ -5,10 +5,9 @@
     deleteConfirm: false,
     deleteTarget: null,
     openAddPanel() {
-        htmx.ajax('GET', '{% url 'rentals:blackout_add_panel' item.id %}', { target: '#blackout-panel-content', swap: 'innerHTML' });
+        htmx.ajax('GET', '{% url 'rentals:blackout_add_panel' item.id %}', { target: '#blackout-panel-content', swap: 'innerHTML' },
         this.addOpen = true;
     },
-    closePanel() { this.addOpen = false; },
     confirmDelete() {
         if (this.deleteTarget) {
             htmx.ajax('POST', this.deleteTarget.url, {
@@ -161,9 +160,6 @@
     </div>
 
     <!-- Side Sheet for adding blackout -->
-    <div class="sheet-backdrop" :class="{ 'is-open': addOpen }" @click.self="closePanel()">
-        <div class="side-sheet side-sheet-right" id="blackout-panel-content"></div>
-    </div>
 
     <!-- Delete confirmation modal -->
     <div class="modal-backdrop" :data-state="deleteConfirm ? 'open' : 'closed'" @click.self="deleteConfirm = false; deleteTarget = null">

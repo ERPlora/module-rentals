@@ -3,6 +3,8 @@ Rental Management Module Views
 """
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.http import HttpResponse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, render as django_render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -114,6 +116,7 @@ def rental_items_list(request):
     }
 
 @login_required
+@htmx_view('rentals/pages/rental_item_add.html', 'rentals/partials/rental_item_add_content.html')
 def rental_item_add(request):
     hub_id = request.session.get('hub_id')
     if request.method == 'POST':
@@ -131,10 +134,13 @@ def rental_item_add(request):
         obj.is_available = is_available
         obj.is_active = is_active
         obj.save()
-        return _render_rental_items_list(request, hub_id)
-    return django_render(request, 'rentals/partials/panel_rental_item_add.html', {})
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('rentals:rental_items_list')
+        return response
+    return {}
 
 @login_required
+@htmx_view('rentals/pages/rental_item_edit.html', 'rentals/partials/rental_item_edit_content.html')
 def rental_item_edit(request, pk):
     hub_id = request.session.get('hub_id')
     obj = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
@@ -147,7 +153,7 @@ def rental_item_edit(request, pk):
         obj.is_active = request.POST.get('is_active') == 'on'
         obj.save()
         return _render_rental_items_list(request, hub_id)
-    return django_render(request, 'rentals/partials/panel_rental_item_edit.html', {'obj': obj})
+    return {'obj': obj}
 
 @login_required
 @require_POST
@@ -265,6 +271,7 @@ def rentals_list(request):
     }
 
 @login_required
+@htmx_view('rentals/pages/rental_add.html', 'rentals/partials/rental_add_content.html')
 def rental_add(request):
     hub_id = request.session.get('hub_id')
     if request.method == 'POST':
@@ -284,10 +291,13 @@ def rental_add(request):
         obj.total = total
         obj.notes = notes
         obj.save()
-        return _render_rentals_list(request, hub_id)
-    return django_render(request, 'rentals/partials/panel_rental_add.html', {})
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('rentals:rentals_list')
+        return response
+    return {}
 
 @login_required
+@htmx_view('rentals/pages/rental_edit.html', 'rentals/partials/rental_edit_content.html')
 def rental_edit(request, pk):
     hub_id = request.session.get('hub_id')
     obj = get_object_or_404(Rental, pk=pk, hub_id=hub_id, is_deleted=False)
@@ -301,7 +311,7 @@ def rental_edit(request, pk):
         obj.notes = request.POST.get('notes', '').strip()
         obj.save()
         return _render_rentals_list(request, hub_id)
-    return django_render(request, 'rentals/partials/panel_rental_edit.html', {'obj': obj})
+    return {'obj': obj}
 
 @login_required
 @require_POST
@@ -352,6 +362,7 @@ def _render_blackouts_list(request, item):
 
 @login_required
 @require_POST
+@htmx_view('rentals/pages/blackout_add.html', 'rentals/partials/blackout_add_content.html')
 def blackout_add(request, pk):
     hub_id = request.session.get('hub_id')
     item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
@@ -380,7 +391,7 @@ def blackout_delete(request, pk, blackout_pk):
 def blackout_add_panel(request, pk):
     hub_id = request.session.get('hub_id')
     item = get_object_or_404(RentalItem, pk=pk, hub_id=hub_id, is_deleted=False)
-    return django_render(request, 'rentals/partials/panel_blackout_add.html', {'item': item})
+    return django_render(request, 'rentals/partials/blackout_add_content.html', {'item': item})
 
 
 @login_required
