@@ -21,7 +21,7 @@
 
     <!-- Form -->
     <form id="add-blackout-form"
-          hx-post="{% url 'rentals:blackout_add' item.id %}" class="max-w-2xl">
+          hx-post="{% url 'rentals:blackout_add' item.id %}">
         {% csrf_token %}
         <div class="card mb-4">
             <div class="card-body flex flex-col gap-4">
