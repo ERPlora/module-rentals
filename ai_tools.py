@@ -100,3 +100,66 @@ class CreateRental(AssistantTool):
             notes=args.get('notes', ''),
         )
         return {"id": str(r.id), "reference": r.reference, "created": True}
+
+
+@register_tool
+class UpdateRental(AssistantTool):
+    name = "update_rental"
+    description = "Update a rental agreement's fields including status, dates, notes, and deposit info."
+    module_id = "rentals"
+    required_permission = "rentals.change_rental"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {
+            "rental_id": {"type": "string"},
+            "status": {"type": "string", "description": "reserved, active, returned, overdue, cancelled"},
+            "start_date": {"type": "string"}, "end_date": {"type": "string"},
+            "customer_name": {"type": "string"},
+            "deposit_amount": {"type": "string"}, "deposit_paid": {"type": "boolean"},
+            "deposit_returned": {"type": "boolean"},
+            "condition_out": {"type": "string"}, "condition_in": {"type": "string"},
+            "notes": {"type": "string"},
+        },
+        "required": ["rental_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from decimal import Decimal
+        from rentals.models import Rental
+        try:
+            r = Rental.objects.get(id=args['rental_id'])
+        except Rental.DoesNotExist:
+            return {"error": "Rental not found"}
+        for field in ('status', 'start_date', 'end_date', 'customer_name', 'deposit_paid', 'deposit_returned', 'condition_out', 'condition_in', 'notes'):
+            if field in args:
+                setattr(r, field, args[field])
+        if 'deposit_amount' in args:
+            r.deposit_amount = Decimal(str(args['deposit_amount']))
+        r.save()
+        return {"id": str(r.id), "reference": r.reference, "status": r.status, "updated": True}
+
+
+@register_tool
+class DeleteRental(AssistantTool):
+    name = "delete_rental"
+    description = "Delete a rental agreement by ID."
+    module_id = "rentals"
+    required_permission = "rentals.delete_rental"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {"rental_id": {"type": "string"}},
+        "required": ["rental_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from rentals.models import Rental
+        try:
+            r = Rental.objects.get(id=args['rental_id'])
+        except Rental.DoesNotExist:
+            return {"error": "Rental not found"}
+        r.delete()
+        return {"deleted": True}
