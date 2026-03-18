@@ -2,8 +2,8 @@ from django.utils.translation import gettext_lazy as _
 
 MODULE_ID = 'rentals'
 MODULE_NAME = _('Rental Management')
-MODULE_VERSION = '1.0.0'
-MODULE_ICON = 'key-outline'
+MODULE_VERSION = '1.0.1'
+MODULE_ICON = 'material:real_estate_agent'
 MODULE_DESCRIPTION = _('Equipment, vehicle and space rental management')
 MODULE_AUTHOR = 'ERPlora'
 MODULE_CATEGORY = 'services'
